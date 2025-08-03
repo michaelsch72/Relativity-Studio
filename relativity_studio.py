@@ -260,6 +260,9 @@ class MainWindow(QMainWindow):
         tab = QWidget()
         layout = QVBoxLayout()
         label = QLabel("""
+<div style='text-align:center; margin-top:10px; margin-bottom:0;'>
+  <span style='font-size:8em; display:inline-block; margin-bottom:18px; text-shadow:0 8px 32px #0277bd55, 0 2px 0 #fff;'>🌀</span>
+</div>
 <div style='background:linear-gradient(120deg,#f5fafd 60%,#e3f2fd 100%); border-radius:22px; box-shadow:0 6px 24px #0002; padding:32px 28px 24px 28px; margin:18px 0 24px 0; font-family:Segoe UI,Arial,sans-serif;'>
   <h1 style='color:#01579b; font-size:2.5em; margin-top:0; margin-bottom:8px; letter-spacing:2px; text-shadow:0 2px 12px #0001;'>Relativity Studio</h1>
   <div style='font-size:1.3em; color:#0277bd; margin-bottom:18px; font-weight:bold;'>Explora la relatividad general de forma interactiva y didáctica</div>

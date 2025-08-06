@@ -1,53 +1,97 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QSlider, QHBoxLayout
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
 import numpy as np
-
-import numpy as np
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QSlider, QHBoxLayout
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QSlider, QHBoxLayout, QFrame, QGroupBox, QScrollArea
 from PyQt5.QtCore import Qt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 def create_light_deflection_tab():
     tab = QWidget()
-    layout = QVBoxLayout()
-    label = QLabel("""
-<div style='background:linear-gradient(120deg,#fffde7 60%,#ffe0b2 100%); border-radius:18px; box-shadow:0 4px 18px #0001; padding:20px 18px 18px 18px; margin-bottom:18px; font-family:Segoe UI,Arial,sans-serif;'>
-<h2 style='color:#ef6c00; font-size:1.7em; margin-top:0; margin-bottom:10px; letter-spacing:1px; text-shadow:0 2px 8px #0002;'>Deflexión de la luz</h2>
-<div style='font-size:1.1em; margin-bottom:10px;'><b>¿Por qué la luz se curva cerca de una masa?</b></div>
-<div style='margin-bottom:8px;'><b>Explicación:</b> La relatividad general predice que la luz sigue geodésicas en el espacio-tiempo curvado. Al pasar cerca de una masa, su trayectoria se desvía.</div>
-<div style='margin-bottom:8px;'><b>Visualización:</b> <span style='color:#ef6c00;'>Ajusta el parámetro de impacto para ver cómo cambia la desviación.</span></div>
-<div style='margin-bottom:8px;'><b>Fórmula:</b> <span style='background:#fffde7; border-radius:8px; padding:2px 8px; color:#b26500; font-weight:bold;'>Δφ ≈ 4GM/(c²b)</span> <span style='font-size:0.95em;'>(aproximación para campos débiles)</span></div>
-<ul style='margin:0 0 0 18px;'>
-<li><b>Δφ:</b> ángulo de deflexión</li>
-<li><b>b:</b> parámetro de impacto</li>
-<li><b>G, M, c:</b> constantes universales</li>
-</ul>
-<div style='margin-bottom:8px;'><b>Historia:</b> <span style='color:#ef6c00;'>La deflexión de la luz fue confirmada en 1919 durante un eclipse solar, validando la teoría de Einstein.</span></div>
-<div style='font-size:0.98em;'><b>Referencia:</b> <a href='https://es.wikipedia.org/wiki/Deflexi%C3%B3n_de_la_luz' style='color:#ef6c00; text-decoration:underline;'>Wikipedia</a></div>
-</div>
-        """)
-    label.setOpenExternalLinks(True)
-    label.setWordWrap(True)
-    layout.addWidget(label)
+    tab.setStyleSheet("""
+        QWidget {
+            background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 #fffde7, stop:1 #ffe0b2);
+        }
+    """)
+    scroll = QScrollArea(tab)
+    scroll.setWidgetResizable(True)
+    content = QWidget()
+    layout = QVBoxLayout(content)
 
-    slider_layout = QHBoxLayout()
+    # Tarjeta didáctica
+    title_box = QGroupBox("🌠 Deflexión de la luz")
+    title_box.setStyleSheet("QGroupBox { font-size: 15px; font-weight: bold; color: #ef6c00; border-radius: 12px; background: #fffde7; margin-top: 10px; padding: 10px; }")
+    vbox_title = QVBoxLayout()
+    exp_label = QLabel(
+        "<b>¿Por qué la luz se curva cerca de una masa?</b><br><br>"
+        "<b>Explicación:</b> La relatividad general predice que la luz sigue geodésicas en el espacio-tiempo curvado. Al pasar cerca de una masa, su trayectoria se desvía.<br>"
+        "<b>Visualización:</b> <span style='color:#ef6c00;'>Ajusta el parámetro de impacto para ver cómo cambia la desviación.</span><br>"
+        "<b>Fórmula:</b> <span style='background:#fffde7; border-radius:8px; padding:2px 8px; color:#b26500; font-weight:bold;'>Δφ ≈ 4GM/(c²b)</span> <span style='font-size:0.95em;'>(aproximación para campos débiles)</span><br>"
+        "<b>Δφ:</b> ángulo de deflexión<br><b>b:</b> parámetro de impacto<br><b>G, M, c:</b> constantes universales<br>"
+        "<b>Historia:</b> La deflexión de la luz fue confirmada en 1919 durante un eclipse solar, validando la teoría de Einstein.<br>"
+        "<b>Referencia:</b> <a href='https://es.wikipedia.org/wiki/Deflexi%C3%B3n_de_la_luz' style='color:#ef6c00; text-decoration:underline;'>Wikipedia</a>"
+    )
+    exp_label.setOpenExternalLinks(True)
+    exp_label.setTextFormat(Qt.RichText)
+    exp_label.setWordWrap(True)
+    exp_label.setStyleSheet("font-size: 15px; color: #333; margin: 0;")
+    vbox_title.addWidget(exp_label)
+    title_box.setLayout(vbox_title)
+    layout.addWidget(title_box)
+
+    # Separador visual
+    sep = QFrame()
+    sep.setFrameShape(QFrame.HLine)
+    sep.setFrameShadow(QFrame.Sunken)
+    sep.setStyleSheet("margin: 12px 0; border: 0; border-top: 2px solid #ef6c00;")
+    layout.addWidget(sep)
+
+    # Mensaje explicativo de uso
+    explicacion_uso = QLabel(
+        "<span style='color:#ef6c00; font-size:1.08em;'><b>¿Cómo usar?</b></span> "
+        "Ajusta el <b>parámetro de impacto b</b> para ver cómo cambia la desviación de la luz al pasar cerca de la masa central. "
+        "¡Experimenta visualmente la predicción de Einstein!"
+    )
+    explicacion_uso.setWordWrap(True)
+    explicacion_uso.setStyleSheet("background: #fffde7; border-radius: 10px; padding: 8px 14px; margin-bottom: 6px; font-size: 14px; color: #ef6c00;")
+    layout.addWidget(explicacion_uso)
+
+    # Controles estilo Material Design
+    param_box = QGroupBox()
+    param_box.setStyleSheet("QGroupBox { background: transparent; border-radius: 18px; border: none; margin-top: 8px; margin-bottom: 16px; box-shadow: none; padding: 12px 18px 12px 18px; }")
+    param_layout = QHBoxLayout(param_box)
+    icon_label = QLabel("<span style='font-size:2.2em;'>💡</span>")
+    icon_label.setStyleSheet("margin-right: 18px; background: transparent; border: none;")
+    param_layout.addWidget(icon_label)
     slider_label = QLabel("Parámetro de impacto b:")
+    slider_label.setStyleSheet("font-size: 1.2em; color: #ef6c00; font-weight: bold; margin-right: 10px; background: transparent; border: none; text-shadow: 0 2px 8px #ffd54f;")
+    param_layout.addWidget(slider_label)
     slider = QSlider(Qt.Horizontal)
     slider.setMinimum(15)
     slider.setMaximum(100)
     slider.setValue(30)
     slider.setTickInterval(1)
     slider.setTickPosition(QSlider.TicksBelow)
+    slider.setStyleSheet("""
+        QSlider { background: transparent; }
+        QSlider::groove:horizontal { height: 10px; background: #ffe0b2; border-radius: 5px; }
+        QSlider::handle:horizontal { background: #ef6c00; border: 2px solid #ffd54f; width: 22px; height: 22px; border-radius: 11px; margin: -7px 0; }
+        QSlider::sub-page:horizontal { background: #ffd54f; border-radius: 5px; }
+        QSlider::add-page:horizontal { background: #fffde7; border-radius: 5px; }
+    """)
+    param_layout.addWidget(slider, stretch=2)
     value_label = QLabel("3.0")
-    slider_layout.addWidget(slider_label)
-    slider_layout.addWidget(slider)
-    slider_layout.addWidget(value_label)
-    layout.addLayout(slider_layout)
+    value_label.setStyleSheet("background: #ef6c00; color: #fff; border-radius: 50%; font-weight:bold; font-size:1.3em; padding: 10px 18px; margin-left: 18px; box-shadow: 0 2px 8px #ffd54f;")
+    param_layout.addWidget(value_label)
+    layout.addWidget(param_box)
 
-    fig = Figure(figsize=(4,4))
+    # Información comparativa
+    info_label = QLabel()
+    info_label.setWordWrap(True)
+    info_label.setStyleSheet("background:#fffde7; border-radius:12px; box-shadow:0 2px 8px #ffd54f; padding:12px; font-size:1.1em; margin:10px 0;")
+    layout.addWidget(info_label)
+    fig = Figure(figsize=(6,5))
     canvas = FigureCanvas(fig)
+    canvas.setMinimumHeight(400)
+    canvas.setStyleSheet("border-radius:18px; box-shadow:0 2px 18px #ffd54f; margin:16px 0 6px 0; background: #fffde7;")
     layout.addWidget(canvas)
 
     def plot_deflection():
@@ -68,16 +112,31 @@ def create_light_deflection_tab():
         ax.plot(x0, y0, 'b--', label="Sin masa (recta)")
         ax.plot(x1, y1, 'r', label="Con masa (desviada)")
         ax.plot(0, 0, 'ko', markersize=10, label="Masa central")
-        ax.set_xlabel("x")
-        ax.set_ylabel("y")
-        ax.set_title("Deflexión de la luz por gravedad")
-        ax.legend()
-        ax.grid(True)
+        ax.set_xlabel("x", fontsize=12, color="#ef6c00")
+        ax.set_ylabel("y", fontsize=12, color="#ef6c00")
+        ax.set_title("Deflexión de la luz por gravedad", fontsize=16, color="#ef6c00", pad=12)
+        ax.legend(fontsize=12)
+        ax.grid(True, alpha=0.3)
+        ax.annotate("Masa central", xy=(0,0), xytext=(2,2), arrowprops=dict(facecolor='#ef6c00', shrink=0.05), fontsize=12, color='#ef6c00', weight='bold')
         canvas.draw()
 
     slider.valueChanged.connect(plot_deflection)
     value_label.setText(f"{slider.value()/10:.1f}")
     plot_deflection()
 
-    tab.setLayout(layout)
+    # Explicación didáctica debajo del gráfico
+    explicacion_grafico = QLabel(
+        "<span style='color:#ef6c00;'><b>¿Qué muestra este gráfico?</b></span> "
+        "La curva roja muestra cómo la luz se desvía al pasar cerca de una masa, mientras que la azul sería la trayectoria sin masa. "
+        "El punto central es la masa responsable de la curvatura. "
+        "Puedes experimentar cambiando el parámetro de impacto para ver el efecto de la gravedad."
+    )
+    explicacion_grafico.setWordWrap(True)
+    explicacion_grafico.setStyleSheet("background: #fffde7; border-radius: 10px; padding: 10px 16px; margin: 8px 0 12px 0; font-size: 14px; color: #ef6c00;")
+    layout.addWidget(explicacion_grafico)
+
+    scroll.setWidget(content)
+    tab_layout = QVBoxLayout(tab)
+    tab_layout.addWidget(scroll)
+    tab.setLayout(tab_layout)
     return tab

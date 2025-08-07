@@ -1,9 +1,9 @@
-
 import numpy as np
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QSlider, QHBoxLayout, QFrame, QScrollArea, QGroupBox
 from PyQt5.QtCore import Qt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from mpl_toolkits.mplot3d import Axes3D  # <-- Añadido para 3D
 
 
 def create_time_dilation_tab():
@@ -99,7 +99,7 @@ def create_time_dilation_tab():
     explicacion_uso.setStyleSheet("background: #e3f2fd; border-radius: 10px; padding: 8px 14px; margin-bottom: 6px; font-size: 14px; color: #1976d2;")
     layout.addWidget(explicacion_uso)
 
-    # Control para elegir el tiempo lejano (t_lejano)
+    # Control para elegir el tiempo lejano (t_lejano) y tipo de gráfico (2D/3D) juntos
     from PyQt5.QtWidgets import QSpinBox, QSizePolicy
     t_lejano_box = QGroupBox()
     t_lejano_box.setStyleSheet("QGroupBox { background: transparent; border: none; margin: 0; padding: 0; }")
@@ -114,6 +114,17 @@ def create_time_dilation_tab():
     t_lejano_spin.setStyleSheet("QSpinBox { font-size: 1.1em; background: #e3f2fd; border-radius: 8px; padding: 4px 12px; min-width: 70px; } QSpinBox::up-button, QSpinBox::down-button { width: 18px; }")
     t_lejano_spin.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
     t_lejano_layout.addWidget(t_lejano_spin)
+
+    # --- Selector de tipo de gráfico (2D/3D) al lado del spinbox ---
+    from PyQt5.QtWidgets import QComboBox
+    graph_select_label = QLabel("Gráfico:")
+    graph_select_label.setStyleSheet("font-size: 1.1em; color: #1976d2; font-weight: bold; margin-left: 18px; margin-right: 8px; background: transparent; border: none;")
+    t_lejano_layout.addWidget(graph_select_label)
+    graph_select = QComboBox()
+    graph_select.addItems(["2D", "3D"])
+    graph_select.setStyleSheet("QComboBox { font-size: 1.1em; background: #e3f2fd; border-radius: 8px; padding: 4px 12px; min-width: 70px; }")
+    t_lejano_layout.addWidget(graph_select)
+
     layout.addWidget(t_lejano_box)
 
     # Información comparativa
@@ -123,7 +134,7 @@ def create_time_dilation_tab():
     layout.addWidget(info_label)
 
 
-    # Gráfico más elaborado y animación visual
+    # Gráfico y animación visual
     fig = Figure(figsize=(9,4))
     canvas = FigureCanvas(fig)
     canvas.setMinimumHeight(350)
@@ -153,6 +164,7 @@ def create_time_dilation_tab():
         rs = 1.0
         r = r_over_rs * rs
         if r <= rs:
+            fig.clear()
             ax = fig.add_subplot(111)
             ax.text(0.5, 0.5, "r debe ser mayor que rₛ", ha='center', va='center', fontsize=14, color='red', transform=ax.transAxes)
             ax.set_xticks([])
@@ -162,8 +174,7 @@ def create_time_dilation_tab():
             anim_label.setText("")
             return
         dilation = np.sqrt(1 - rs/r)
-        # Ejemplo comparativo
-        t_lejano = t_lejano_spin.value()  # valor configurable por el usuario
+        t_lejano = t_lejano_spin.value()
         t_cerca = t_lejano * dilation
         info_label.setText(
             f"<b>Comparación:</b> Si un observador lejano mide <span style='color:#1565c0;'>{t_lejano:.0f} s</span>,<br>"
@@ -178,26 +189,43 @@ def create_time_dilation_tab():
             f"Reloj cerca de la masa: {reloj_cerca}  {t_cerca:.2f} s"
         )
         fig.clear()
-        ax = fig.add_subplot(111)
-        r_vals = np.linspace(1.01, 10, 300)
-        y = np.sqrt(1 - 1/r_vals)
-        ax.plot(r_vals, y, color='#1976d2', linewidth=2, label="Relación Δt'/Δt")
-        ax.axvline(r_over_rs, color='r', linestyle='--', linewidth=2, label=f"r = {r_over_rs:.1f} rₛ")
-        ax.scatter([r_over_rs], [dilation], color='red', s=80, zorder=5)
-        ax.set_xlabel("r/rₛ", fontsize=12)
-        ax.set_ylabel("Δt'/Δt", fontsize=12)
-        ax.set_title("Dilatación temporal gravitacional", fontsize=16, pad=8)
-        fig.subplots_adjust(top=0.93)
-        ax.legend()
-        ax.grid(True, alpha=0.3)
-        # Explicación visual
-        ax.annotate(f"Δt'/Δt = {dilation:.3f}", xy=(r_over_rs, dilation), xytext=(r_over_rs+1, dilation-0.1),
-                    arrowprops=dict(facecolor='black', shrink=0.05), fontsize=11, color='black')
+        if graph_select.currentText() == "2D":
+            # --- Gráfico 2D ---
+            ax = fig.add_subplot(111)
+            r_vals = np.linspace(1.01, 10, 300)
+            y = np.sqrt(1 - 1/r_vals)
+            ax.plot(r_vals, y, color='#1976d2', linewidth=2, label="Relación Δt'/Δt")
+            ax.axvline(r_over_rs, color='r', linestyle='--', linewidth=2, label=f"r = {r_over_rs:.1f} rₛ")
+            ax.scatter([r_over_rs], [dilation], color='red', s=80, zorder=5)
+            ax.set_xlabel("r/rₛ", fontsize=12)
+            ax.set_ylabel("Δt'/Δt", fontsize=12)
+            ax.set_title("Dilatación temporal gravitacional", fontsize=16, pad=8)
+            fig.subplots_adjust(top=0.93)
+            ax.legend()
+            ax.grid(True, alpha=0.3)
+            ax.annotate(f"Δt'/Δt = {dilation:.3f}", xy=(r_over_rs, dilation), xytext=(r_over_rs+1, dilation-0.1),
+                        arrowprops=dict(facecolor='black', shrink=0.05), fontsize=11, color='black')
+        else:
+            # --- Gráfico 3D ---
+            ax = fig.add_subplot(111, projection='3d')
+            r_vals = np.linspace(1.01, 10, 80)
+            t_vals = np.linspace(1, 3600, 80)
+            R, T = np.meshgrid(r_vals, t_vals)
+            DIL = np.sqrt(1 - 1/R)
+            T_PRIMA = T * DIL
+            surf = ax.plot_surface(R, T, T_PRIMA, cmap='viridis', alpha=0.85)
+            ax.set_xlabel("r/rₛ", fontsize=10)
+            ax.set_ylabel("Δt (s)", fontsize=10)
+            ax.set_zlabel("Δt' (s)", fontsize=10)
+            ax.set_title("Dilatación temporal gravitacional (superficie 3D)", fontsize=13, pad=10)
+            ax.scatter([r_over_rs], [t_lejano], [t_cerca], color='red', s=60, label="Situación actual")
+            fig.colorbar(surf, ax=ax, shrink=0.6, aspect=12, pad=0.1, label="Δt'")
+            ax.legend()
         canvas.draw()
-
 
     slider.valueChanged.connect(update)
     t_lejano_spin.valueChanged.connect(update)
+    graph_select.currentIndexChanged.connect(update)  # <-- Añadido para actualizar al cambiar el selector
     value_label.setText(f"{slider.value()/10:.1f}")
     update()
 

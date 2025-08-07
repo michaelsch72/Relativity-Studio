@@ -4,6 +4,7 @@ from PyQt5.QtCore import Qt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from scipy.integrate import solve_ivp
+from mpl_toolkits.mplot3d import Axes3D  # Importación para 3D
 
 def create_numeric_geodesics_tab():
     tab = QWidget()
@@ -88,6 +89,30 @@ def create_numeric_geodesics_tab():
     type_combo.addItems(["Luz", "Partícula con masa"])
     type_combo.setStyleSheet("font-size: 1.1em; color: #00897b; background: #e0f7fa; border-radius: 8px; padding: 4px 12px; margin-left: 8px;")
     param_layout.addWidget(type_combo)
+
+    # Selector de gráfico 2D/3D alineado a la derecha
+    graph_label = QLabel("Gráfico:")
+    graph_label.setStyleSheet("font-size: 1.1em; color: #00897b; font-weight: bold; margin-left: 18px; margin-right: 8px;")
+    param_layout.addWidget(graph_label)
+    graph_select = QComboBox()
+    graph_select.addItems(["2D", "3D"])
+    graph_select.setStyleSheet("""
+        QComboBox {
+            font-size: 1.1em;
+            background: #e0f7fa;
+            color: #00897b;
+            border: 1.5px solid #4dd0e1;
+            border-radius: 8px;
+            padding: 4px 18px 4px 12px;
+            min-width: 70px;
+        }
+        QComboBox QAbstractItemView {
+            background: #e0f7fa;
+            color: #00897b;
+            selection-background-color: #4dd0e1;
+        }
+    """)
+    param_layout.addWidget(graph_select)
     layout.addWidget(param_box)
 
     # Información comparativa
@@ -100,6 +125,7 @@ def create_numeric_geodesics_tab():
     canvas.setMinimumHeight(400)
     canvas.setStyleSheet("border-radius:18px; box-shadow:0 2px 18px #4dd0e1; margin:16px 0 6px 0; background: #e0f7fa;")
     layout.addWidget(canvas)
+
     def geodesic_rhs(phi, y, b, is_light):
         r, pr = y
         rs = 1.0
@@ -117,6 +143,7 @@ def create_numeric_geodesics_tab():
             dpr = (L**2/r**3 - rs*L**2/r**4) - rs/(2*r**2)*pr**2/f
             dr = pr
             return [dr, dpr/f]
+
     def plot_geodesic():
         b = slider.value() / 10
         value_label.setText(f"{b:.1f}")
@@ -136,16 +163,45 @@ def create_numeric_geodesics_tab():
             y = r[mask] * np.sin(phi[mask])
             info_label.setText(f"<b>Ejemplo:</b> Para b = {b:.1f}, la trayectoria es <span style='color:#00897b;'>{'luz' if is_light else 'partícula con masa'}</span>.")
             fig.clear()
-            ax = fig.add_subplot(111)
-            ax.plot(x, y, label="Trayectoria", linewidth=2)
-            ax.plot(0, 0, 'ko', markersize=10, label="Masa central")
-            ax.set_aspect('equal')
-            ax.set_xlabel("x", fontsize=12, color="#00897b")
-            ax.set_ylabel("y", fontsize=12, color="#00897b")
-            ax.set_title("Geodésica en Schwarzschild", fontsize=16, color="#00897b", pad=12)
-            ax.legend(fontsize=12)
-            ax.grid(True, alpha=0.3)
-            ax.annotate("Horizonte de eventos", xy=(0,0), xytext=(2,2), arrowprops=dict(facecolor='#00897b', shrink=0.05), fontsize=12, color='#00897b', weight='bold')
+            if graph_select.currentText() == "2D":
+                ax = fig.add_subplot(111)
+                ax.plot(x, y, label="Trayectoria", linewidth=2)
+                ax.plot(0, 0, 'ko', markersize=10, label="Masa central")
+                ax.set_aspect('equal')
+                ax.set_xlabel("x", fontsize=12, color="#00897b")
+                ax.set_ylabel("y", fontsize=12, color="#00897b")
+                ax.set_title("Geodésica en Schwarzschild", fontsize=16, color="#00897b", pad=12)
+                ax.legend(fontsize=12)
+                ax.grid(True, alpha=0.3)
+                ax.annotate("Horizonte de eventos", xy=(0,0), xytext=(2,2), arrowprops=dict(facecolor='#00897b', shrink=0.05), fontsize=12, color='#00897b', weight='bold')
+            else:
+                # Gráfico 3D más impactante: superficie de curvatura + trayectoria
+                # Superficie embebida de Schwarzschild
+                rs = 1.0
+                r_surf = np.linspace(rs + 0.01, r0, 80)
+                theta_surf = np.linspace(0, 2*np.pi, 80)
+                R_surf, Theta_surf = np.meshgrid(r_surf, theta_surf)
+                Z_surf = 2 * np.sqrt(rs * (R_surf - rs))
+                X_surf = R_surf * np.cos(Theta_surf)
+                Y_surf = R_surf * np.sin(Theta_surf)
+
+                z_traj = 2 * np.sqrt(rs * (r[mask] - rs))
+                # Si hay valores nan por debajo del horizonte, poner a cero
+                z_traj = np.where(np.isreal(z_traj), np.real(z_traj), 0)
+
+                ax = fig.add_subplot(111, projection='3d')
+                surf = ax.plot_surface(X_surf, Y_surf, Z_surf, cmap='viridis', alpha=0.5, linewidth=0, antialiased=True)
+                ax.plot(x, y, z_traj, label="Trayectoria", linewidth=2.5, color="#00897b")
+                ax.scatter([0], [0], [0], color='k', s=60, label="Masa central")
+                ax.set_xlabel("x")
+                ax.set_ylabel("y")
+                ax.set_zlabel("z (curvatura)")
+                ax.set_title("Geodésica en Schwarzschild (3D)", fontsize=15, color="#00897b", pad=10)
+                ax.legend()
+                fig.colorbar(surf, ax=ax, shrink=0.6, aspect=12, pad=0.1, label="Curvatura")
+                ax.grid(True, alpha=0.3)
+                # Mejorar vista
+                ax.view_init(elev=35, azim=45)
             canvas.draw()
         except Exception as e:
             info_label.setText(f"<span style='color:red;'>Error en la integración: {str(e)}</span>")
@@ -155,8 +211,10 @@ def create_numeric_geodesics_tab():
             ax.set_xticks([])
             ax.set_yticks([])
             canvas.draw()
+
     slider.valueChanged.connect(plot_geodesic)
     type_combo.currentIndexChanged.connect(plot_geodesic)
+    graph_select.currentIndexChanged.connect(plot_geodesic)
     value_label.setText(f"{slider.value()/10:.1f}")
     plot_geodesic()
 

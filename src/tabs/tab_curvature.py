@@ -1,8 +1,9 @@
 import numpy as np
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QSlider, QHBoxLayout, QFrame, QGroupBox, QScrollArea
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QSlider, QHBoxLayout, QFrame, QGroupBox, QScrollArea, QSizePolicy, QComboBox
 from PyQt5.QtCore import Qt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from mpl_toolkits.mplot3d import Axes3D
 
 def create_curvature_tab():
     tab = QWidget()
@@ -84,6 +85,36 @@ def create_curvature_tab():
     param_layout.addWidget(value_label)
     layout.addWidget(param_box)
 
+    # Selector 2D/3D alineado a la derecha y con color acorde
+    selector_box = QGroupBox()
+    selector_box.setStyleSheet("QGroupBox { background: transparent; border: none; margin: 0; padding: 0; }")
+    selector_layout = QHBoxLayout(selector_box)
+    selector_layout.setContentsMargins(0, 0, 0, 0)
+    selector_layout.addStretch()  # Empuja los widgets a la derecha
+    selector_label = QLabel("Gráfico:")
+    selector_label.setStyleSheet("font-size: 1.1em; color: #6a1b9a; font-weight: bold; margin-right: 8px; background: transparent; border: none;")
+    selector_layout.addWidget(selector_label)
+    graph_select = QComboBox()
+    graph_select.addItems(["2D", "3D"])
+    graph_select.setStyleSheet("""
+        QComboBox {
+            font-size: 1.1em;
+            background: #ede7f6;
+            color: #6a1b9a;
+            border: 1.5px solid #b39ddb;
+            border-radius: 8px;
+            padding: 4px 18px 4px 12px;
+            min-width: 70px;
+        }
+        QComboBox QAbstractItemView {
+            background: #ede7f6;
+            color: #6a1b9a;
+            selection-background-color: #b39ddb;
+        }
+    """)
+    selector_layout.addWidget(graph_select)
+    layout.addWidget(selector_box)
+
     # Información comparativa
     info_label = QLabel()
     info_label.setWordWrap(True)
@@ -98,28 +129,66 @@ def create_curvature_tab():
     def plot_curvature():
         rs = slider.value() / 10
         value_label.setText(f"{rs:.1f}")
-        r = np.linspace(rs + 0.01, rs * 6, 400)
-        z = 2 * np.sqrt(rs * (r - rs))
-        info_label.setText(f"<b>Ejemplo:</b> Para rₛ = {rs:.1f}, la curvatura máxima es <span style='color:#6a1b9a;'>{np.max(z):.2f}</span>.")
-        fig.clear()
-        ax = fig.add_subplot(111)
-        ax.plot(r, z, color='#6a1b9a', linewidth=3, label="Superficie embebida")
-        ax.scatter([rs*2], [2*np.sqrt(rs*(rs*2-rs))], color='#d500f9', s=100, zorder=5, label="Ejemplo r = 2rₛ")
-        ax.set_xlabel("r (radio)", fontsize=14, color='#6a1b9a')
-        ax.set_ylabel("z (curvatura)", fontsize=14, color='#6a1b9a')
-        ax.set_title(f"Curvatura del espacio-tiempo (rₛ = {rs:.1f})", fontsize=18, color='#4a148c', pad=12)
-        ax.legend(fontsize=12)
-        ax.grid(True, alpha=0.3)
-        ax.tick_params(axis='x', labelsize=12, colors='#6a1b9a')
-        ax.tick_params(axis='y', labelsize=12, colors='#6a1b9a')
-        ax.annotate(f"Curvatura máxima: {np.max(z):.2f}", xy=(r[np.argmax(z)], np.max(z)), xytext=(r[np.argmax(z)]+1, np.max(z)-1),
-                    arrowprops=dict(facecolor='#6a1b9a', shrink=0.05), fontsize=13, color='#4a148c', weight='bold')
+        if graph_select.currentText() == "2D":
+            r = np.linspace(rs + 0.01, rs * 6, 400)
+            z = 2 * np.sqrt(rs * (r - rs))
+            info_label.setText(f"<b>Ejemplo:</b> Para rₛ = {rs:.1f}, la curvatura máxima es <span style='color:#6a1b9a;'>{np.max(z):.2f}</span>.")
+            fig.clear()
+            ax = fig.add_subplot(111)
+            ax.plot(r, z, color='#6a1b9a', linewidth=3, label="Superficie embebida")
+            ax.scatter([rs*2], [2*np.sqrt(rs*(rs*2-rs))], color='#d500f9', s=100, zorder=5, label="Ejemplo r = 2rₛ")
+            ax.set_xlabel("r (radio)", fontsize=14, color='#6a1b9a')
+            ax.set_ylabel("z (curvatura)", fontsize=14, color='#6a1b9a')
+            ax.set_title(f"Curvatura del espacio-tiempo (rₛ = {rs:.1f})", fontsize=18, color='#4a148c', pad=12)
+            ax.legend(fontsize=12)
+            ax.grid(True, alpha=0.3)
+            ax.tick_params(axis='x', labelsize=12, colors='#6a1b9a')
+            ax.tick_params(axis='y', labelsize=12, colors='#6a1b9a')
+            ax.annotate(f"Curvatura máxima: {np.max(z):.2f}", xy=(r[np.argmax(z)], np.max(z)), xytext=(r[np.argmax(z)]+1, np.max(z)-1),
+                        arrowprops=dict(facecolor='#6a1b9a', shrink=0.05), fontsize=13, color='#4a148c', weight='bold')
+        else:
+            # Gráfico 3D: superficie de curvatura Schwarzschild embebida
+            fig.clear()
+            ax = fig.add_subplot(111, projection='3d')
+            r = np.linspace(rs + 0.01, rs * 6, 100)
+            theta = np.linspace(0, 2 * np.pi, 100)
+            R, Theta = np.meshgrid(r, theta)
+            Z = 2 * np.sqrt(rs * (R - rs))
+            X = R * np.cos(Theta)
+            Y = R * np.sin(Theta)
+            surf = ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.85)
+            ax.set_xlabel("x", fontsize=10)
+            ax.set_ylabel("y", fontsize=10)
+            ax.set_zlabel("z (curvatura)", fontsize=10)
+            ax.set_title(f"Curvatura espacio-tiempo (3D, rₛ={rs:.1f})", fontsize=13, pad=10)
+            fig.colorbar(surf, ax=ax, shrink=0.6, aspect=12, pad=0.1, label="z")
+            info_label.setText(f"<b>Ejemplo:</b> Para rₛ = {rs:.1f}, la curvatura máxima es <span style='color:#6a1b9a;'>{np.max(Z):.2f}</span>.")
         canvas.draw()
-    # ...
 
     slider.valueChanged.connect(plot_curvature)
+    graph_select.currentIndexChanged.connect(plot_curvature)
     value_label.setText(f"{slider.value()/10:.1f}")
     plot_curvature()
+
+    # Explicación didáctica debajo del gráfico
+    explicacion_grafico = QLabel(
+        "<span style='color:#6a1b9a;'><b>¿Qué muestra este gráfico?</b></span> "
+        "La curva representa cómo se <b>hunde</b> el espacio-tiempo cerca de una masa según la Relatividad General. "
+        "No es una forma real del espacio, sino una analogía visual para entender la curvatura causada por la gravedad. "
+        "El punto destacado muestra el doble del radio de Schwarzschild, una referencia clásica en la teoría."
+    )
+    explicacion_grafico.setWordWrap(True)
+    explicacion_grafico.setStyleSheet("background: #ede7f6; border-radius: 10px; padding: 10px 16px; margin: 8px 0 12px 0; font-size: 14px; color: #6a1b9a;")
+    layout.addWidget(explicacion_grafico)
+
+    scroll.setWidget(content)
+    tab_layout = QVBoxLayout(tab)
+    tab_layout.addWidget(scroll)
+    tab.setLayout(tab_layout)
+    return tab
+    plot_curvature()
+    graph_select.currentIndexChanged.connect(lambda: plot_curvature_2d() if graph_select.currentText() == "2D" else plot_curvature_3d())
+    plot_curvature_2d()
 
     # Explicación didáctica debajo del gráfico
     explicacion_grafico = QLabel(

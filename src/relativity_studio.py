@@ -41,7 +41,6 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(create_numeric_geodesics_tab(), "Geodésicas Numéricas")
         self.tabs.addTab(create_light_deflection_tab(), "Deflexión de la Luz")
         self.tabs.addTab(create_orbits_tab(), "Órbitas Relativistas")
-        self.tabs.addTab(create_animations_tab(), "Animaciones")
         self.tabs.addTab(create_advanced_effects_tab(), "Simulaciones Avanzadas")
 def main():
     app = QApplication(sys.argv)

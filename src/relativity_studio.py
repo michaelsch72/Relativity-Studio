@@ -43,40 +43,6 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(create_orbits_tab(), "Órbitas Relativistas")
         self.tabs.addTab(create_animations_tab(), "Animaciones")
         self.tabs.addTab(create_advanced_effects_tab(), "Simulaciones Avanzadas")
-
-# Sugerencias para mejorar tu programa:
-# - Añadir exportación de gráficos a imagen (botón "Guardar gráfico").
-# - Permitir cambiar parámetros físicos (G, c, masas) en una pestaña de configuración.
-# - Añadir animaciones temporales (evolución de órbitas o trayectorias).  # <-- Puedes crear una pestaña "Animaciones" con ejemplos animados de órbitas, dilatación temporal, etc.
-# - Incluir una pestaña de "Preguntas frecuentes" o "Glosario" para términos de relatividad.
-# - Permitir comparar dos escenarios en paralelo (doble gráfico).
-# - Añadir accesibilidad: modo oscuro, fuentes más grandes, etc.
-# - Permitir copiar los cálculos de la "pizarra" como texto.
-# - Añadir soporte para inglés/español (internacionalización).
-# - Incluir referencias bibliográficas y enlaces a recursos didácticos.
-# - Añadir simulaciones de efectos relativistas adicionales (ondas gravitacionales, lentes gravitacionales, etc).  # <-- Puedes crear una pestaña "Simulaciones avanzadas" para efectos como ondas gravitacionales o lentes gravitacionales.
-
-# Más ideas de simulaciones avanzadas para Relativity Studio:
-# - Efecto Doppler relativista (corrimiento al rojo y azul de la luz).
-# - Agujeros de gusano (visualización de trayectorias y deformación del espacio).
-# - Expansión del universo (modelo de Hubble, simulación de galaxias alejándose).
-# - Colisión de agujeros negros (fusión y emisión de ondas gravitacionales).
-# - Trayectorias de luz en lentes gravitacionales complejas (múltiples masas).
-# - Simulación de relojes gemelos (paradoja de los gemelos).
-# - Visualización de horizontes de sucesos y regiones prohibidas.
-# - Simulación de caída libre en Schwarzschild/Kerr.
-# - Efectos de rotación (espacio-tiempo de Kerr, arrastre de referencia).
-# - Visualización de la energía y momento en el espacio-tiempo curvo.
-
-# Puedes crear nuevas pestañas para cada efecto, siguiendo el estilo visual y didáctico de tu app.
-
-# Para implementar:
-# 1. Crea un archivo src/tabs/tab_animations.py con animaciones usando matplotlib.animation o QTimer.
-# 2. Crea un archivo src/tabs/tab_advanced_effects.py para simulaciones como ondas gravitacionales o lentes gravitacionales.
-# 3. Añade las nuevas pestañas en init_tabs():
-#     self.tabs.addTab(create_animations_tab(), "Animaciones")
-#     self.tabs.addTab(create_advanced_effects_tab(), "Simulaciones Avanzadas")
-
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()

@@ -192,14 +192,14 @@ def create_advanced_effects_tab():
     animate_lens_video(0)
     tabs.addTab(lens_widget, "Lente gravitacional (video)")
 
-    # --- Efecto Doppler relativista ---
+    # --- Efecto Doppler relativista (mejorado) ---
     doppler_widget = QWidget()
     doppler_layout = QVBoxLayout(doppler_widget)
     title_doppler = QGroupBox("🌈 Efecto Doppler Relativista (simulación tipo video)")
     title_doppler.setStyleSheet("QGroupBox { font-size: 15px; font-weight: bold; color: #b26500; border-radius: 12px; background: #fffde7; margin-top: 10px; padding: 10px; }")
     vbox_doppler = QVBoxLayout()
     exp_doppler = QLabel(
-        "<b>Simulación tipo video:</b> Observa cómo cambia la frecuencia de la luz cuando la fuente se mueve respecto al observador.<br>"
+        "<b>Simulación tipo video:</b> Observa cómo cambia la frecuencia y el color de la luz cuando la fuente se mueve respecto al observador.<br>"
         "<b>Corrimiento al azul:</b> Fuente se acerca.<br>"
         "<b>Corrimiento al rojo:</b> Fuente se aleja.<br>"
         "<b>Referencia:</b> <a href='https://es.wikipedia.org/wiki/Efecto_Doppler_relativista' style='color:#b26500; text-decoration:underline;'>Wikipedia</a>"
@@ -210,7 +210,7 @@ def create_advanced_effects_tab():
     vbox_doppler.addWidget(exp_doppler)
     title_doppler.setLayout(vbox_doppler)
     doppler_layout.addWidget(title_doppler)
-    fig_doppler = Figure(figsize=(5.5, 3))
+    fig_doppler = Figure(figsize=(6, 3.5))
     canvas_doppler = FigureCanvas(fig_doppler)
     canvas_doppler.setStyleSheet("border-radius:14px; box-shadow:0 2px 12px #ffd54f; margin:10px 0; background: #fffde7;")
     doppler_layout.addWidget(canvas_doppler)
@@ -218,26 +218,52 @@ def create_advanced_effects_tab():
     dynamic_doppler.setWordWrap(True)
     dynamic_doppler.setStyleSheet("background: #fffde7; border-radius: 8px; padding: 6px 12px; margin: 4px 0 10px 0; font-size: 13px; color: #b26500;")
     doppler_layout.addWidget(dynamic_doppler)
+
+    # Parámetros para la animación
     v = np.linspace(-0.99, 0.99, 120)
+    wave_x = np.linspace(0, 2*np.pi, 200)
+    color_map = lambda freq: (
+        "#1976d2" if freq > 1.05 else "#b26500" if freq < 0.95 else "#43a047"
+    )  # azul, rojo, verde (sin corrimiento)
+
     def animate_doppler(i):
         fig_doppler.clear()
         ax = fig_doppler.add_subplot(111)
         v_now = v[i]
         gamma = 1/np.sqrt(1-v_now**2)
         freq_obs = gamma*(1-v_now)
-        color = "#1976d2" if v_now<0 else "#b26500"
-        ax.plot([0,1],[1,freq_obs], color=color, linewidth=6)
-        ax.set_ylim(0,2)
-        ax.set_xlim(0,1)
-        ax.set_title(f"Corrimiento {'al azul' if v_now<0 else 'al rojo'}: f_obs = {freq_obs:.2f} f_emitida", color=color)
+        # Simula la onda emitida y la onda observada
+        y_emit = np.sin(wave_x)
+        y_obs = np.sin(wave_x * freq_obs)
+        # Color según corrimiento
+        color_emit = "#43a047"
+        color_obs = color_map(freq_obs)
+        # Dibuja fuente y observador
+        ax.plot([-2, -1.2], [0, 0], color="#888", linewidth=3)
+        ax.plot([2, 1.2], [0, 0], color="#888", linewidth=3)
+        ax.plot(-2, 0, marker="o", markersize=18, color="#1976d2" if v_now < 0 else "#b26500")
+        ax.plot(2, 0, marker="o", markersize=18, color="#333")
+        ax.text(-2, 0.25, "Fuente", fontsize=12, color="#1976d2" if v_now < 0 else "#b26500", ha="center")
+        ax.text(2, 0.25, "Observador", fontsize=12, color="#333", ha="center")
+        # Dibuja ondas
+        ax.plot(wave_x/np.pi-1.5, y_emit, color=color_emit, linewidth=2.5, label="Onda emitida")
+        ax.plot(wave_x/np.pi+1.5, y_obs, color=color_obs, linewidth=2.5, label="Onda observada")
+        # Flechas de movimiento
+        ax.arrow(-2, -0.5, 0.3 if v_now<0 else -0.3, 0, head_width=0.13, head_length=0.13, fc="#1976d2" if v_now<0 else "#b26500", ec="#1976d2" if v_now<0 else "#b26500")
+        ax.set_xlim(-2.5, 2.5)
+        ax.set_ylim(-1.2, 1.2)
         ax.axis('off')
+        ax.legend(loc="upper center", fontsize=10)
+        ax.set_title(f"v/c = {v_now:+.2f}   f_obs = {freq_obs:.2f} f_emitida", color=color_obs)
         canvas_doppler.draw()
+        # Texto dinámico según el frame
         if v_now < -0.5:
-            dynamic_doppler.setText("La fuente se acerca rápidamente: la luz se ve azulada (corrimiento al azul).")
+            dynamic_doppler.setText("La fuente se acerca rápidamente: la onda se comprime (corrimiento al azul).")
         elif v_now > 0.5:
-            dynamic_doppler.setText("La fuente se aleja rápidamente: la luz se ve enrojecida (corrimiento al rojo).")
+            dynamic_doppler.setText("La fuente se aleja rápidamente: la onda se estira (corrimiento al rojo).")
         else:
-            dynamic_doppler.setText("La fuente está casi en reposo relativo.")
+            dynamic_doppler.setText("La fuente está casi en reposo relativo: no hay corrimiento apreciable.")
+
     play_btn_doppler = QPushButton("▶ Reproducir video")
     play_btn_doppler.setStyleSheet("background:#b26500; color:white; font-weight:bold; border-radius:8px; padding:6px 18px; margin:8px 0;")
     doppler_layout.addWidget(play_btn_doppler)
@@ -257,14 +283,16 @@ def create_advanced_effects_tab():
     animate_doppler(0)
     tabs.addTab(doppler_widget, "Efecto Doppler")
 
-    # --- Agujero de gusano ---
+    # --- Agujero de gusano (simulación mejorada con dos naves en 3D: la verde llega primero) ---
     wormhole_widget = QWidget()
     wormhole_layout = QVBoxLayout(wormhole_widget)
     title_wormhole = QGroupBox("🌀 Agujero de Gusano (simulación tipo video)")
     title_wormhole.setStyleSheet("QGroupBox { font-size: 15px; font-weight: bold; color: #6a1b9a; border-radius: 12px; background: #ede7f6; margin-top: 10px; padding: 10px; }")
     vbox_wormhole = QVBoxLayout()
     exp_wormhole = QLabel(
-        "<b>Simulación tipo video:</b> Visualiza la deformación del espacio en un agujero de gusano tipo Morris-Thorne.<br>"
+        "<b>Simulación tipo video:</b> Observa cómo dos naves espaciales parten de A: la gris toma el camino normal (largo) y la verde el atajo del agujero de gusano (corto y rápido).<br>"
+        "<b>¿Qué es un agujero de gusano?</b><br>"
+        "Es una hipotética 'puerta' que conecta dos regiones distantes del espacio-tiempo.<br>"
         "<b>Referencia:</b> <a href='https://es.wikipedia.org/wiki/Agujero_de_gusano' style='color:#6a1b9a; text-decoration:underline;'>Wikipedia</a>"
     )
     exp_wormhole.setOpenExternalLinks(True)
@@ -273,7 +301,7 @@ def create_advanced_effects_tab():
     vbox_wormhole.addWidget(exp_wormhole)
     title_wormhole.setLayout(vbox_wormhole)
     wormhole_layout.addWidget(title_wormhole)
-    fig_wormhole = Figure(figsize=(5.5, 3))
+    fig_wormhole = Figure(figsize=(6, 4))
     canvas_wormhole = FigureCanvas(fig_wormhole)
     canvas_wormhole.setStyleSheet("border-radius:14px; box-shadow:0 2px 12px #b39ddb; margin:10px 0; background: #ede7f6;")
     wormhole_layout.addWidget(canvas_wormhole)
@@ -281,21 +309,84 @@ def create_advanced_effects_tab():
     dynamic_wormhole.setWordWrap(True)
     dynamic_wormhole.setStyleSheet("background: #ede7f6; border-radius: 8px; padding: 6px 12px; margin: 4px 0 10px 0; font-size: 13px; color: #6a1b9a;")
     wormhole_layout.addWidget(dynamic_wormhole)
-    r = np.linspace(-2,2,400)
+
+    # Parámetros para la animación
+    n_frames = 100
+    # Puntos de inicio y fin
+    A = np.array([-3, 0, 0])
+    B = np.array([3, 0, 0])
+    # Camino normal (gris, largo, sobre z=0)
+    path_normal = np.linspace(A, B, n_frames)
+    # Camino atajo (verde): A -> boca_L -> boca_R -> B, pero la nave verde llega antes
+    mouth_L = np.array([-1, 0, 0])
+    mouth_R = np.array([1, 0, 0])
+    # El túnel del agujero de gusano será un arco en z
+    tunnel_z = 2.0
+    n1 = n_frames // 4
+    n2 = n_frames // 4
+    n3 = n_frames // 2
+    path1 = np.linspace(A, mouth_L, n1)
+    # Túnel: de boca_L a boca_R por un arco en z
+    tunnel_t = np.linspace(0, np.pi, n2)
+    tunnel_path = np.stack([
+        np.linspace(mouth_L[0], mouth_R[0], n2),
+        np.zeros(n2),
+        tunnel_z * np.sin(tunnel_t)
+    ], axis=1)
+    path2 = np.linspace(mouth_R, B, n3)
+    # La nave verde recorre su camino en n1+n2+n3//2 frames (llega antes)
+    total_verde = n1 + n2 + n3//2
+
     def animate_wormhole(i):
         fig_wormhole.clear()
-        ax = fig_wormhole.add_subplot(111)
-        z = np.sinh(r + 0.5*np.sin(i/20))
-        ax.plot(r, z, color="#6a1b9a", linewidth=3)
-        ax.set_title("Sección de un agujero de gusano", color="#6a1b9a")
-        ax.axis('off')
-        canvas_wormhole.draw()
-        if i < 40:
-            dynamic_wormhole.setText("El agujero de gusano está estable.")
-        elif i < 80:
-            dynamic_wormhole.setText("El agujero de gusano se deforma: el 'puente' se ensancha.")
+        ax = fig_wormhole.add_subplot(111, projection='3d')
+        # Dibuja el espacio normal (camino largo, gris)
+        ax.plot(path_normal[:,0], path_normal[:,1], path_normal[:,2], color="#bdbdbd", linewidth=2, linestyle="--", alpha=0.7, label="Camino normal")
+        ax.text(-3, 0, 0.5, "A", fontsize=13, color="#1976d2", ha="center")
+        ax.text(3, 0, 0.5, "B", fontsize=13, color="#b26500", ha="center")
+        # Dibuja las bocas del agujero de gusano
+        ax.scatter([mouth_L[0], mouth_R[0]], [mouth_L[1], mouth_R[1]], [mouth_L[2], mouth_R[2]], color="#6a1b9a", s=80, zorder=5)
+        ax.text(mouth_L[0], mouth_L[1], 0.7, "Boca 1", color="#6a1b9a", ha="center", fontsize=11)
+        ax.text(mouth_R[0], mouth_R[1], 0.7, "Boca 2", color="#6a1b9a", ha="center", fontsize=11)
+        # Dibuja el túnel del agujero de gusano (arco en z)
+        ax.plot(tunnel_path[:,0], tunnel_path[:,1], tunnel_path[:,2], color="#43a047", linewidth=2.5, linestyle=":", alpha=0.8, label="Túnel (atajo)")
+        # Trayectoria nave verde (atajo)
+        if i < n1:
+            verde = np.concatenate([path1[:i+1], np.tile(mouth_L, (n2,1)), np.tile(mouth_R, (n3//2,1))], axis=0)
+            nave_verde = path1[i]
+            dynamic_wormhole.setText("Ambas naves parten de A. La nave verde va hacia la boca del agujero de gusano, la gris sigue el camino largo.")
+        elif i < n1+n2:
+            idx_tun = i-n1
+            verde = np.concatenate([path1, tunnel_path[:idx_tun+1], np.tile(mouth_R, (n3//2,1))], axis=0)
+            nave_verde = tunnel_path[idx_tun]
+            dynamic_wormhole.setText("La nave verde cruza el túnel del agujero de gusano. La gris sigue avanzando por el camino largo.")
+        elif i < total_verde:
+            idx_path2 = i-(n1+n2)
+            verde = np.concatenate([path1, tunnel_path, path2[:idx_path2+1]], axis=0)
+            nave_verde = path2[idx_path2]
+            if idx_path2 < n3//2-1:
+                dynamic_wormhole.setText("La nave verde ya tomó el atajo y está llegando a B. La gris aún no llega.")
+            else:
+                dynamic_wormhole.setText("La nave verde llegó primero a B usando el agujero de gusano. La gris sigue en camino.")
         else:
-            dynamic_wormhole.setText("El agujero de gusano vuelve a su forma original.")
+            verde = np.concatenate([path1, tunnel_path, path2[:n3//2]], axis=0)
+            nave_verde = path2[n3//2-1]
+        ax.plot(verde[:,0], verde[:,1], verde[:,2], color="#43a047", linewidth=2.5, label="Nave (atajo)")
+        ax.plot(nave_verde[0], nave_verde[1], nave_verde[2], marker="*", markersize=18, color="#43a047", zorder=10)
+        # Trayectoria nave gris (camino largo, más lenta)
+        idx_lenta = min(i, n_frames-1)
+        nave_lenta = path_normal[idx_lenta]
+        ax.plot(path_normal[:idx_lenta+1,0], path_normal[:idx_lenta+1,1], path_normal[:idx_lenta+1,2], color="#bdbdbd", linewidth=2, linestyle="--")
+        ax.plot(nave_lenta[0], nave_lenta[1], nave_lenta[2], marker="*", markersize=18, color="#bdbdbd", zorder=10)
+        # Ajustes de la vista 3D
+        ax.set_xlim(-3.5, 3.5)
+        ax.set_ylim(-2, 2)
+        ax.set_zlim(-0.5, 2.5)
+        ax.axis('off')
+        ax.set_title("Viaje espacial: camino normal vs. agujero de gusano", color="#6a1b9a", fontsize=14)
+        ax.legend(loc="lower center", fontsize=10)
+        canvas_wormhole.draw()
+
     play_btn_wormhole = QPushButton("▶ Reproducir video")
     play_btn_wormhole.setStyleSheet("background:#6a1b9a; color:white; font-weight:bold; border-radius:8px; padding:6px 18px; margin:8px 0;")
     wormhole_layout.addWidget(play_btn_wormhole)
@@ -308,21 +399,21 @@ def create_advanced_effects_tab():
     def update_wormhole():
         animate_wormhole(frame_wormhole[0])
         frame_wormhole[0] += 1
-        if frame_wormhole[0] > 120:
+        if frame_wormhole[0] > n_frames-1:
             timer_wormhole.stop()
     timer_wormhole.timeout.connect(update_wormhole)
     play_btn_wormhole.clicked.connect(play_wormhole)
     animate_wormhole(0)
     tabs.addTab(wormhole_widget, "Agujero de Gusano")
 
-    # --- Expansión del universo ---
+    # --- Expansión del universo (simulación 3D realista con colisión y ondas gravitacionales) ---
     expansion_widget = QWidget()
     expansion_layout = QVBoxLayout(expansion_widget)
-    title_expansion = QGroupBox("🌌 Expansión del Universo (simulación tipo video)")
+    title_expansion = QGroupBox("🌌 Expansión del Universo (simulación 3D realista)")
     title_expansion.setStyleSheet("QGroupBox { font-size: 15px; font-weight: bold; color: #b26500; border-radius: 12px; background: #fffde7; margin-top: 10px; padding: 10px; }")
     vbox_expansion = QVBoxLayout()
     exp_expansion = QLabel(
-        "<b>Simulación tipo video:</b> Observa cómo las galaxias se alejan unas de otras según la ley de Hubble.<br>"
+        "<b>Simulación tipo video 3D:</b> Observa cómo dos galaxias se acercan, colisionan y generan ondas gravitacionales (esferas en expansión), mientras el resto del universo se expande.<br>"
         "<b>Referencia:</b> <a href='https://es.wikipedia.org/wiki/Expansi%C3%B3n_del_universo' style='color:#b26500; text-decoration:underline;'>Wikipedia</a>"
     )
     exp_expansion.setOpenExternalLinks(True)
@@ -331,7 +422,7 @@ def create_advanced_effects_tab():
     vbox_expansion.addWidget(exp_expansion)
     title_expansion.setLayout(vbox_expansion)
     expansion_layout.addWidget(title_expansion)
-    fig_expansion = Figure(figsize=(5.5, 3))
+    fig_expansion = Figure(figsize=(9, 7))
     canvas_expansion = FigureCanvas(fig_expansion)
     canvas_expansion.setStyleSheet("border-radius:14px; box-shadow:0 2px 12px #ffd54f; margin:10px 0; background: #fffde7;")
     expansion_layout.addWidget(canvas_expansion)
@@ -339,25 +430,105 @@ def create_advanced_effects_tab():
     dynamic_expansion.setWordWrap(True)
     dynamic_expansion.setStyleSheet("background: #fffde7; border-radius: 8px; padding: 6px 12px; margin: 4px 0 10px 0; font-size: 13px; color: #b26500;")
     expansion_layout.addWidget(dynamic_expansion)
-    x = np.linspace(-1,1,10)
-    y = np.zeros_like(x)
+
+    # Parámetros para la animación 3D
+    n_galaxies = 12
+    np.random.seed(42)
+    theta_gal = np.random.uniform(0, 2*np.pi, n_galaxies)
+    phi_gal = np.random.uniform(0, np.pi, n_galaxies)
+    r0_gal = np.random.uniform(2.5, 4.5, n_galaxies)
+    x0 = r0_gal * np.sin(phi_gal) * np.cos(theta_gal)
+    y0 = r0_gal * np.sin(phi_gal) * np.sin(theta_gal)
+    z0 = r0_gal * np.cos(phi_gal)
+    colors = ["#b26500", "#ffd54f", "#ff7043", "#43a047", "#1976d2", "#ab47bc", "#00897b", "#fbc02d", "#c62828", "#00838f", "#6d4c41", "#c0ca33"]
+
+    # Dos galaxias especiales para la colisión
+    gA0 = np.array([-5.5, 0, 0])
+    gB0 = np.array([5.5, 0, 0])
+    gA_color = "#1976d2"
+    gB_color = "#d84315"
+    t_max = 4.0
+    n_frames_exp = 110
+
     def animate_expansion(i):
-        t = i/20
-        scale = np.exp(0.5*t)
+        t = t_max * i / n_frames_exp
+        scale = np.exp(0.45 * t)
         fig_expansion.clear()
-        ax = fig_expansion.add_subplot(111)
-        ax.scatter(x*scale, y, color="#b26500", s=80)
-        ax.set_xlim(-5,5)
-        ax.set_ylim(-1,1)
-        ax.set_title(f"Galaxias alejándose (t={t:.1f})", color="#b26500")
-        ax.axis('off')
-        canvas_expansion.draw()
-        if t < 1:
-            dynamic_expansion.setText("El universo está casi estático.")
-        elif t < 2:
-            dynamic_expansion.setText("Las galaxias empiezan a alejarse unas de otras.")
+        ax = fig_expansion.add_subplot(111, projection='3d')
+
+        # Trayectorias de galaxias normales (expansión)
+        for j in range(n_galaxies):
+            traj_t = np.linspace(0, t, i+1)
+            traj_scale = np.exp(0.45 * traj_t)
+            ax.plot(x0[j]*traj_scale, y0[j]*traj_scale, z0[j]*traj_scale, color=colors[j%len(colors)], alpha=0.18, linewidth=2)
+
+        # Trayectoria de las dos galaxias que colisionan (líneas que se unen)
+        t_col = t_max * 0.45
+        t_fusion = t_max * 0.55
+        if t < t_col:
+            frac = t / t_col
+            gA = gA0 * (1-frac)
+            gB = gB0 * (1-frac)
+            ax.plot([gA0[0], gA[0]], [gA0[1], gA[1]], [gA0[2], gA[2]], color=gA_color, linewidth=3, alpha=0.7)
+            ax.plot([gB0[0], gB[0]], [gB0[1], gB[1]], [gB0[2], gB[2]], color=gB_color, linewidth=3, alpha=0.7)
+            ax.scatter(gA[0], gA[1], gA[2], color=gA_color, s=180, edgecolor="#fffde7", linewidth=2, zorder=5)
+            ax.scatter(gB[0], gB[1], gB[2], color=gB_color, s=180, edgecolor="#fffde7", linewidth=2, zorder=5)
+            ax.text(gA[0], gA[1], gA[2]+0.3, "G-A", fontsize=13, color=gA_color, ha="center")
+            ax.text(gB[0], gB[1], gB[2]+0.3, "G-B", fontsize=13, color=gB_color, ha="center")
+            dynamic_expansion.setText("Dos galaxias se acercan en el universo en expansión.")
+        elif t < t_fusion:
+            frac = (t-t_col)/(t_fusion-t_col)
+            ax.plot([gA0[0], 0], [gA0[1], 0], [gA0[2], 0], color=gA_color, linewidth=3, alpha=0.7)
+            ax.plot([gB0[0], 0], [gB0[1], 0], [gB0[2], 0], color=gB_color, linewidth=3, alpha=0.7)
+            ax.plot([0, 0], [0, 0], [0, 0.5*frac], color="#ab47bc", linewidth=4, alpha=0.7)
+            ax.scatter(0, 0, 0.5*frac, color="#ab47bc", s=220, edgecolor="#fffde7", linewidth=2, zorder=6)
+            ax.text(0, 0, 0.5*frac+0.3, "Fusión", fontsize=14, color="#ab47bc", ha="center")
+            dynamic_expansion.setText("¡Colisión de galaxias! Se fusionan y emiten ondas gravitacionales.")
         else:
-            dynamic_expansion.setText("La expansión se acelera: las galaxias se separan rápidamente.")
+            frac = (t-t_fusion)/(t_max-t_fusion)
+            fusion_pos = np.array([0,0,0.5]) * (1-frac)
+            fusion_exp = fusion_pos * (1+2*frac)
+            ax.plot([gA0[0], 0], [gA0[1], 0], [gA0[2], 0], color=gA_color, linewidth=3, alpha=0.7)
+            ax.plot([gB0[0], 0], [gB0[1], 0], [gB0[2], 0], color=gB_color, linewidth=3, alpha=0.7)
+            ax.plot([0, fusion_exp[0]], [0, fusion_exp[1]], [0.5, fusion_exp[2]], color="#ab47bc", linewidth=4, alpha=0.7)
+            ax.scatter(fusion_exp[0], fusion_exp[1], fusion_exp[2], color="#ab47bc", s=220, edgecolor="#fffde7", linewidth=2, zorder=6)
+            ax.text(fusion_exp[0], fusion_exp[1], fusion_exp[2]+0.3, "Galaxia fusionada", fontsize=14, color="#ab47bc", ha="center")
+            dynamic_expansion.setText("La galaxia fusionada se aleja tras la colisión y la onda gravitacional se expande.")
+
+        # Galaxias normales (expansión)
+        for j in range(n_galaxies):
+            x = x0[j]*scale
+            y = y0[j]*scale
+            z = z0[j]*scale
+            dist = np.sqrt(x**2 + y**2 + z**2)
+            gal_color = colors[j%len(colors)] if dist < 7 else "#d84315"
+            ax.scatter(x, y, z, color=gal_color, s=120, edgecolor="#fffde7", linewidth=2, zorder=3)
+            ax.text(x, y, z+0.18, f"G{j+1}", fontsize=11, color=gal_color, ha="center")
+
+        # Vía Láctea en el centro
+        ax.scatter(0, 0, 0, color="#1976d2", s=180, edgecolor="#fffde7", linewidth=2, zorder=4)
+        ax.text(0, 0, -0.45, "Vía Láctea", fontsize=14, color="#1976d2", ha="center")
+
+        # Onda gravitacional tras colisión (esfera en expansión)
+        if t > t_fusion:
+            gwave_radius = 0.5 + 7.5 * max(0, (t-t_fusion)/(t_max-t_fusion))
+            u = np.linspace(0, 2*np.pi, 40)
+            v = np.linspace(0, np.pi, 20)
+            xg = gwave_radius * np.outer(np.cos(u), np.sin(v))
+            yg = gwave_radius * np.outer(np.sin(u), np.sin(v))
+            zg = gwave_radius * np.outer(np.ones_like(u), np.cos(v))
+            ax.plot_wireframe(xg, yg, zg, color="#90caf9", alpha=0.32, linewidth=1.1)
+            ax.plot_wireframe(1.05*xg, 1.05*yg, 1.05*zg, color="#1976d2", alpha=0.13, linewidth=0.7)
+
+        # Ajustes de la vista 3D
+        ax.set_xlim(-12, 12)
+        ax.set_ylim(-12, 12)
+        ax.set_zlim(-8, 8)
+        ax.set_box_aspect([1,1,0.7])
+        ax.axis('off')
+        ax.set_title("Expansión del universo, colisión y ondas gravitacionales", color="#b26500", fontsize=16)
+        canvas_expansion.draw()
+
     play_btn_expansion = QPushButton("▶ Reproducir video")
     play_btn_expansion.setStyleSheet("background:#b26500; color:white; font-weight:bold; border-radius:8px; padding:6px 18px; margin:8px 0;")
     expansion_layout.addWidget(play_btn_expansion)
@@ -370,21 +541,21 @@ def create_advanced_effects_tab():
     def update_expansion():
         animate_expansion(frame_expansion[0])
         frame_expansion[0] += 1
-        if frame_expansion[0] > 60:
+        if frame_expansion[0] > n_frames_exp:
             timer_expansion.stop()
     timer_expansion.timeout.connect(update_expansion)
     play_btn_expansion.clicked.connect(play_expansion)
     animate_expansion(0)
     tabs.addTab(expansion_widget, "Expansión del Universo")
 
-    # --- Colisión de agujeros negros ---
+    # --- Colisión de agujeros negros (simulación realista 3D con ondas gravitacionales) ---
     bh_widget = QWidget()
     bh_layout = QVBoxLayout(bh_widget)
-    title_bh = QGroupBox("⚫⚫ Colisión de Agujeros Negros (simulación tipo video)")
+    title_bh = QGroupBox("⚫⚫ Colisión de Agujeros Negros (simulación 3D realista)")
     title_bh.setStyleSheet("QGroupBox { font-size: 15px; font-weight: bold; color: #1976d2; border-radius: 12px; background: #e3f2fd; margin-top: 10px; padding: 10px; }")
     vbox_bh = QVBoxLayout()
     exp_bh = QLabel(
-        "<b>Simulación tipo video:</b> Visualiza la fusión de dos agujeros negros y la emisión de ondas gravitacionales.<br>"
+        "<b>Simulación tipo video 3D:</b> Visualiza dos agujeros negros orbitando, colisionando y emitiendo ondas gravitacionales (esferas en expansión).<br>"
         "<b>Referencia:</b> <a href='https://es.wikipedia.org/wiki/Onda_gravitacional#Colisi%C3%B3n_de_agujeros_negros' style='color:#1976d2; text-decoration:underline;'>Wikipedia</a>"
     )
     exp_bh.setOpenExternalLinks(True)
@@ -393,7 +564,7 @@ def create_advanced_effects_tab():
     vbox_bh.addWidget(exp_bh)
     title_bh.setLayout(vbox_bh)
     bh_layout.addWidget(title_bh)
-    fig_bh = Figure(figsize=(5.5, 3))
+    fig_bh = Figure(figsize=(7, 5))
     canvas_bh = FigureCanvas(fig_bh)
     canvas_bh.setStyleSheet("border-radius:14px; box-shadow:0 2px 12px #90caf9; margin:10px 0; background: #e3f2fd;")
     bh_layout.addWidget(canvas_bh)
@@ -401,27 +572,70 @@ def create_advanced_effects_tab():
     dynamic_bh.setWordWrap(True)
     dynamic_bh.setStyleSheet("background: #e3f2fd; border-radius: 8px; padding: 6px 12px; margin: 4px 0 10px 0; font-size: 13px; color: #1976d2;")
     bh_layout.addWidget(dynamic_bh)
-    t = np.linspace(0, 2*np.pi, 200)
-    x1 = -np.cos(t)
-    y1 = np.sin(t)
-    x2 = np.cos(t)
-    y2 = -np.sin(t)
+
+    # Parámetros de la simulación
+    n_frames_bh = 120
+    t_max_bh = 2 * np.pi
+    r_orbit = 3.5
+    z_orbit = 0.0
+    merge_frame = n_frames_bh // 2
+    gwave_duration = n_frames_bh // 2
+
     def animate_bh(i):
         fig_bh.clear()
-        ax = fig_bh.add_subplot(111)
-        idx = min(i*2, len(t)-1)
-        ax.plot(x1[:idx], y1[:idx], color="#1976d2", linewidth=3)
-        ax.plot(x2[:idx], y2[:idx], color="#b26500", linewidth=3)
-        ax.plot([0], [0], 'ko', markersize=18)
-        ax.set_title("Trayectorias antes de la fusión", color="#1976d2")
-        ax.axis('off')
-        canvas_bh.draw()
-        if idx < 100:
-            dynamic_bh.setText("Los agujeros negros giran acercándose.")
-        elif idx < 180:
-            dynamic_bh.setText("¡Colisión! Se fusionan y emiten una onda gravitacional.")
+        ax = fig_bh.add_subplot(111, projection='3d')
+        t = t_max_bh * i / n_frames_bh
+        # Antes de la fusión: órbitas espirales
+        if i < merge_frame:
+            # Espiral hacia el centro
+            frac = i / merge_frame
+            r_now = r_orbit * (1 - 0.7 * frac)
+            theta = t * 1.5
+            x1 = r_now * np.cos(theta)
+            y1 = r_now * np.sin(theta)
+            z1 = z_orbit
+            x2 = -r_now * np.cos(theta)
+            y2 = -r_now * np.sin(theta)
+            z2 = z_orbit
+            # Trayectorias
+            n_traj = 80
+            traj_t = np.linspace(0, t, n_traj)
+            traj_r = r_orbit * (1 - 0.7 * traj_t / t_max_bh)
+            ax.plot(traj_r * np.cos(traj_t*1.5), traj_r * np.sin(traj_t*1.5), np.zeros(n_traj), color="#1976d2", alpha=0.5, linewidth=2)
+            ax.plot(-traj_r * np.cos(traj_t*1.5), -traj_r * np.sin(traj_t*1.5), np.zeros(n_traj), color="#b26500", alpha=0.5, linewidth=2)
+            # Agujeros negros
+            ax.scatter(x1, y1, z1, color="#1976d2", s=300, edgecolor="#fff", linewidth=2, zorder=5)
+            ax.scatter(x2, y2, z2, color="#b26500", s=300, edgecolor="#fff", linewidth=2, zorder=5)
+            ax.text(x1, y1, z1+0.3, "BH-1", fontsize=13, color="#1976d2", ha="center")
+            ax.text(x2, y2, z2+0.3, "BH-2", fontsize=13, color="#b26500", ha="center")
+            dynamic_bh.setText("Los agujeros negros orbitan y se acercan, perdiendo energía por ondas gravitacionales.")
         else:
-            dynamic_bh.setText("Queda un solo agujero negro más masivo.")
+            # Fusión y emisión de onda gravitacional
+            frac = (i - merge_frame) / (n_frames_bh - merge_frame)
+            # Posición fusionada
+            x1 = x2 = y1 = y2 = z1 = z2 = 0
+            ax.scatter(0, 0, 0, color="#ab47bc", s=420, edgecolor="#fff", linewidth=2, zorder=6)
+            ax.text(0, 0, 0.4, "BH fusionado", fontsize=15, color="#ab47bc", ha="center")
+            # Onda gravitacional: esfera en expansión
+            gwave_radius = 0.5 + 7.0 * frac
+            u = np.linspace(0, 2*np.pi, 40)
+            v = np.linspace(0, np.pi, 20)
+            xg = gwave_radius * np.outer(np.cos(u), np.sin(v))
+            yg = gwave_radius * np.outer(np.sin(u), np.sin(v))
+            zg = gwave_radius * np.outer(np.ones_like(u), np.cos(v))
+            ax.plot_wireframe(xg, yg, zg, color="#90caf9", alpha=0.32, linewidth=1.1)
+            ax.plot_wireframe(1.05*xg, 1.05*yg, 1.05*zg, color="#1976d2", alpha=0.13, linewidth=0.7)
+            dynamic_bh.setText("¡Colisión! Los agujeros negros se fusionan y emiten una onda gravitacional que se expande por el espacio.")
+
+        # Ajustes de la vista 3D
+        ax.set_xlim(-8, 8)
+        ax.set_ylim(-8, 8)
+        ax.set_zlim(-3, 3)
+        ax.set_box_aspect([1,1,0.5])
+        ax.axis('off')
+        ax.set_title("Colisión de agujeros negros y ondas gravitacionales", color="#1976d2", fontsize=15)
+        canvas_bh.draw()
+
     play_btn_bh = QPushButton("▶ Reproducir video")
     play_btn_bh.setStyleSheet("background:#1976d2; color:white; font-weight:bold; border-radius:8px; padding:6px 18px; margin:8px 0;")
     bh_layout.addWidget(play_btn_bh)
@@ -434,7 +648,7 @@ def create_advanced_effects_tab():
     def update_bh():
         animate_bh(frame_bh[0])
         frame_bh[0] += 1
-        if frame_bh[0] > 100:
+        if frame_bh[0] > n_frames_bh:
             timer_bh.stop()
     timer_bh.timeout.connect(update_bh)
     play_btn_bh.clicked.connect(play_bh)

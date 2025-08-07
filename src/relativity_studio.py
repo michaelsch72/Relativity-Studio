@@ -14,6 +14,16 @@ from tabs.tab_light_deflection import create_light_deflection_tab
 from tabs.tab_orbits import create_orbits_tab
 from tabs.tab_animations import create_animations_tab
 from tabs.tab_advanced_effects import create_advanced_effects_tab
+from tabs.tab_doppler import create_doppler_tab
+from tabs.tab_wormhole import create_wormhole_tab
+from tabs.tab_expansion import create_expansion_tab
+from tabs.tab_bh_collision import create_bh_collision_tab
+from tabs.tab_multi_lens import create_multi_lens_tab
+from tabs.tab_twins import create_twins_tab
+from tabs.tab_horizon import create_horizon_tab
+from tabs.tab_freefall import create_freefall_tab
+from tabs.tab_kerr import create_kerr_tab
+from tabs.tab_energy_momentum import create_energy_momentum_tab
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -45,6 +55,20 @@ class MainWindow(QMainWindow):
 # - Añadir soporte para inglés/español (internacionalización).
 # - Incluir referencias bibliográficas y enlaces a recursos didácticos.
 # - Añadir simulaciones de efectos relativistas adicionales (ondas gravitacionales, lentes gravitacionales, etc).  # <-- Puedes crear una pestaña "Simulaciones avanzadas" para efectos como ondas gravitacionales o lentes gravitacionales.
+
+# Más ideas de simulaciones avanzadas para Relativity Studio:
+# - Efecto Doppler relativista (corrimiento al rojo y azul de la luz).
+# - Agujeros de gusano (visualización de trayectorias y deformación del espacio).
+# - Expansión del universo (modelo de Hubble, simulación de galaxias alejándose).
+# - Colisión de agujeros negros (fusión y emisión de ondas gravitacionales).
+# - Trayectorias de luz en lentes gravitacionales complejas (múltiples masas).
+# - Simulación de relojes gemelos (paradoja de los gemelos).
+# - Visualización de horizontes de sucesos y regiones prohibidas.
+# - Simulación de caída libre en Schwarzschild/Kerr.
+# - Efectos de rotación (espacio-tiempo de Kerr, arrastre de referencia).
+# - Visualización de la energía y momento en el espacio-tiempo curvo.
+
+# Puedes crear nuevas pestañas para cada efecto, siguiendo el estilo visual y didáctico de tu app.
 
 # Para implementar:
 # 1. Crea un archivo src/tabs/tab_animations.py con animaciones usando matplotlib.animation o QTimer.
